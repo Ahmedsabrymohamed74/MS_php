@@ -1,17 +1,40 @@
- <?php
+<?php
+if (isset($_GET['param1'])) {
+ define('DB_HOST', 'localhost');
+ define('DB_USER', 'root');
+ define('DB_PASSWORD', '');
+ define('DB_DATABASE', 'android_api');
+ $product_id=$_GET['param1'];
  
- include "..\php\connect.php";
-// echo "Connection Success!";
-$query = "SELECT * FROM shop_product";
-$result = mysql_query($query);
-
-//Disp vals
-while($value = mysql_fetch_array($result)){
-	echo $value['Shop Name'], " ";
-	echo $value['Product Name'], " ";
-	echo $value['Price'], " ";
-	echo $value['special offers'], " ", "<br>";
-	
+ $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE);
+ 
+ if (mysqli_connect_errno()) {
+ echo "Failed to connect to MySQL: " . mysqli_connect_error();
+ die();
+ }
+ 
+ $stmt = $conn->prepare("SELECT product_shop.shop_id,product_shop.price,product_shop.specialOffers,shop.name,shop.latitude,shop.longitude FROM product_shop INNER JOIN shop ON product_shop.shop_id=shop.shop_id WHERE product_id=$product_id");
 
  
- ?>
+ $stmt->execute();
+ 
+ $stmt->bind_result($shop_id, $price, $specialOffers, $name, $latitude, $longitude);
+ 
+ $shops = array(); 
+ 
+ while($stmt->fetch()){
+ $temp = array(); 
+ $temp['shop_id'] = $shop_id; 
+ $temp['price'] = $price; 
+ $temp['specialOffers'] = $specialOffers;
+ $temp['name'] = $name;
+ $temp['latitude'] = $latitude;
+ $temp['longitude'] = $longitude;
+ array_push($shops, $temp);
+ }
+ 
+ echo json_encode($shops);
+}else{
+	echo "Product_ID is Required";
+}
+?>
